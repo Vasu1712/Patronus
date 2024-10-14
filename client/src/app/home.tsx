@@ -51,17 +51,6 @@ const Home: React.FC = () => {
                 ID.unique(),               
                 flightDetailsWithUser       
             );
-
-            const response = await fetch('/get-flight-prediction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ documentId: document.$id }),
-            });
-    
-            const prediction = await response.json();
-            console.log('Predicted Flight Details:', prediction.data);
     
             alert('Flight details saved successfully with user email!');
         } catch (error) {
