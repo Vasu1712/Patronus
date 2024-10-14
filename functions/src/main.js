@@ -1,62 +1,66 @@
-const sdk = require("node-appwrite");
-const axios = require("axios");
-const { process } = require("aframe");
+import { Client, Databases, Query } from 'appwrite';
+import axios from 'axios';
 
-module.exports = async function(req, res) {
-   
-    const client = new sdk.Client();
+const client = new Client();
+const databases = new Databases(client);
 
-    const database = new sdk.Databases(client);
-    
-    client
-      .setEndpoint('https://cloud.appwrite.io/v1')
-      .setProject(process.env.APPWRITE_PROJECT_ID)
-      .setKey(process.env.APPWRITE_API_KEY);
+// Initialize Appwrite Client
+client
+    .setEndpoint('https://cloud.appwrite.io/v1') // Appwrite API Endpoint
+    .setProject(process.env.APPWRITE_PROJECT_ID)    // Project ID
+    .setKey(process.env.APPWRITE_API_KEY);          // API Key
 
+// Function to get flight details and send them to the AI model
+export const sendFlightDataToAI = async (flightDocumentId) => {
     try {
-        // Retrieve the email (or any identifier) passed to the cloud function
-        const userEmail = req.variables['userEmail'];
+        // Retrieve flight details from Appwrite Database
+        const flightDetailsResponse = await databases.getDocument(
+            process.env.APPWRITE_DATABASE_ID, // Database ID
+            process.env.APPWRITE_COLLECTION_ID, // Collection ID
+            flightDocumentId // Document ID
+        );
 
-        // Query the Appwrite database to get the flight details
-        const response = await database.listDocuments(process.env.APPWRITE_DATABASE_ID, process.env.APPWRITE_COLLECTION_ID, [
-            sdk.Query.equal('userEmail', userEmail)
-        ]);
+        const flightDetails = flightDetailsResponse;
+        
+        // Prepare the payload for Hugging Face model
+        const payload = {
+            fromLocation: flightDetails.fromLocation,
+            toLocation: flightDetails.toLocation,
+            departureDate: flightDetails.departureDate,
+            arrivalDate: flightDetails.arrivalDate,
+            passengers: flightDetails.passengers,
+        };
 
-        if (response.total === 0) {
-            return res.status(404).json({ message: "No flight data found for the user" });
-        }
-
-        const flightDetails = response.documents[0]; // Assuming we're using the first document returned
-
-        // Prepare the payload to send to Hugging Face model
-        const hugFaceResponse = await axios.post(
-            'https://api-inference.huggingface.co/models/KingNish/OpenGPT-4o',
-            {
-                fromLocation: flightDetails.fromLocation,
-                toLocation: flightDetails.toLocation,
-                departureDate: flightDetails.departureDate,
-                arrivalDate: flightDetails.arrivalDate,
-                passengers: flightDetails.passengers
-            },
+        // Send the data to the AI model (Hugging Face API)
+        const response = await axios.post(
+            process.env.HUGGINGFACE_MODEL_URL,
+            payload,
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.HUGGING_FACE_API_TOKEN}`,
-                    'Content-Type': 'application/json'
-                }
+                    'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
             }
         );
 
-        // The prediction data from Hugging Face
-        const prediction = hugFaceResponse.data;
+        const predictionResult = response.data;
 
-        // Return the predicted flight details to the frontend
-        return res.json({
-            predictedFlightDetails: prediction,
-        });
+        // Handle the AI model's response
+        console.log('AI Prediction:', predictionResult);
 
+        // Save the AI prediction results back to Appwrite
+        await databases.updateDocument(
+            process.env.APPWRITE_DATABASE_ID,
+            process.env.APPWRITE_COLLECTION_ID,
+            flightDocumentId,
+            {
+                aiPrediction: predictionResult,
+            }
+        );
+
+        return predictionResult;
     } catch (error) {
-        // Handle errors (e.g., Appwrite errors, Hugging Face API errors)
-        console.error('Error:', error);
-        return res.status(500).json({ error: 'Something went wrong!' });
+        console.error('Error sending flight data to AI model:', error);
+        throw new Error('Failed to communicate with AI model or save results.');
     }
 };
