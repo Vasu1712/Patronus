@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "historicalData.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+     "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "appwrite": "^16.0.2",
+    "axios": "^1.7.7",
+    "node-appwrite": "^11.1.1",
+    "node-cron": "^3.0.3"
+  }
+}
