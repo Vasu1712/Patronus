@@ -20,6 +20,23 @@ const Home: React.FC = () => {
     const [selectedDates, setSelectedDates] = useState<[Date | null, Date | null]>([null, null]);
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());  
 
+    const fetchUpdatedFlightDetails = async (documentId: string) => {
+        try {
+            const updatedDocument = await databases.getDocument(
+                '670d6cf40006f6102f3c',  // Your Appwrite database ID
+                '670d6d030007cc158b32',  // Your Appwrite collection ID
+                documentId               // Document ID
+            );
+    
+            console.log('Updated Document:', updatedDocument); // Log the entire document
+            console.log('AI Response:', updatedDocument.aiResponse);  // This line may throw an error if aiResponse is undefined
+            return updatedDocument;
+        } catch (error) {
+            console.error('Error fetching updated document:', error);
+            return undefined; // Explicitly return undefined if there's an error
+        }
+    };
+    
     const handleGetFlights = async () => {
         if (!fromLocation || !toLocation || !selectedDates[0] || !selectedDates[1]) {
             alert('Please fill in the required fields.');
@@ -37,27 +54,38 @@ const Home: React.FC = () => {
         try {
             const user = await account.get(); 
             const userEmail = user.email;
-            // console.log('User Email:', userEmail);
-
+    
             const flightDetailsWithUser = {
                 ...flightDetails,
                 userEmail,  
             };
-            // console.log('Flight Details with User:', flightDetailsWithUser);
-
-            await databases.createDocument(
-                '6709749a002d51dba001',  
-                '670aae53001f52bb7fae',    
+    
+            const document = await databases.createDocument(
+                '670d6cf40006f6102f3c',  
+                '670d6d030007cc158b32',    
                 ID.unique(),               
                 flightDetailsWithUser       
             );
     
-            alert('Flight details saved successfully with user email!');
+            alert('Flight details saved successfully! Now fetching AI prediction...');
+    
+            // Fetch the updated document with AI prediction
+            const updatedDocument = await fetchUpdatedFlightDetails(document.$id);
+    
+            // Check if updatedDocument is defined
+            if (updatedDocument) {
+                console.log('AI Response:', updatedDocument.aiResponse);
+            } else {
+                console.error('Failed to fetch updated document');
+                alert('Failed to fetch AI prediction');
+            }
+    
         } catch (error) {
             console.error('Error saving flight details:', error);
             alert('Failed to save flight details');
         }
     };
+    
     
     
 

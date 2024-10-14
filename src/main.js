@@ -1,35 +1,66 @@
-import { Client, Users } from 'node-appwrite';
+import { Client, Databases, Query } from 'appwrite';
+import axios from 'axios';
 
-// This Appwrite function will be executed every time your function is triggered
-export default async ({ req, res, log, error }) => {
-  // You can use the Appwrite SDK to interact with other services
-  // For this example, we're using the Users service
-  const client = new Client()
-    .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT)
-    .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-    .setKey(req.headers['x-appwrite-key'] ?? '');
-  const users = new Users(client);
+const client = new Client();
+const databases = new Databases(client);
 
-  try {
-    const response = await users.list();
-    // Log messages and errors to the Appwrite Console
-    // These logs won't be seen by your end users
-    log(`Total users: ${response.total}`);
-  } catch(err) {
-    error("Could not list users: " + err.message);
-  }
+// Initialize Appwrite Client
+client
+    .setEndpoint('https://cloud.appwrite.io/v1')
+    .setProject(process.env.APPWRITE_PROJECT_ID)    
+    .setKey(process.env.APPWRITE_API_KEY);          
 
-  // The req object contains the request data
-  if (req.path === "/ping") {
-    // Use res object to respond with text(), json(), or binary()
-    // Don't forget to return a response!
-    return res.text("Pong");
-  }
+// Function to get flight details and send them to the AI model
+export const sendFlightDataToAI = async (flightDocumentId) => {
+    try {
+        // Retrieve flight details from Appwrite Database
+        const flightDetailsResponse = await databases.getDocument(
+            process.env.APPWRITE_DATABASE_ID, // Database ID
+            process.env.APPWRITE_COLLECTION_ID, // Collection ID
+            flightDocumentId // Document ID
+        );
 
-  return res.json({
-    motto: "Build like a team of hundreds_",
-    learn: "https://appwrite.io/docs",
-    connect: "https://appwrite.io/discord",
-    getInspired: "https://builtwith.appwrite.io",
-  });
+        const flightDetails = flightDetailsResponse;
+        
+        // Prepare the payload for Hugging Face model
+        const payload = {
+            fromLocation: flightDetails.fromLocation,
+            toLocation: flightDetails.toLocation,
+            departureDate: flightDetails.departureDate,
+            arrivalDate: flightDetails.arrivalDate,
+            passengers: flightDetails.passengers,
+        };
+
+        // Send the data to the AI model (Hugging Face API)
+        const response = await axios.post(
+            process.env.HUGGINGFACE_MODEL_URL,
+            payload,
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        const predictionResult = response.data;
+
+        // Handle the AI model's response
+        console.log('AI Prediction:', predictionResult);
+
+        // Save the AI prediction results back to Appwrite
+        await databases.updateDocument(
+            process.env.APPWRITE_DATABASE_ID,
+            process.env.APPWRITE_COLLECTION_ID,
+            flightDocumentId,
+            {
+                aiPrediction: predictionResult,
+            }
+        );
+
+        return predictionResult;
+    } catch (error) {
+        console.error('Error sending flight data to AI model:', error);
+        throw new Error('Failed to communicate with AI model or save results.');
+    }
 };
