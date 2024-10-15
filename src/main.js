@@ -4,11 +4,12 @@ import axios from 'axios';
 // Initialize Appwrite Client
 const client = new Client();
 
-client.setEndpoint('https://cloud.appwrite.io/v1'); // Set your Appwrite API endpoint
-client.setProject(process.env.APPWRITE_PROJECT_ID); // Set your Appwrite project ID
-client.setKey(process.env.APPWRITE_API_KEY);        // Set your Appwrite API key
+client
+    .setEndpoint('https://cloud.appwrite.io/v1') // Set your Appwrite API endpoint
+    .setProject(process.env.APPWRITE_PROJECT_ID); // Set your Appwrite project ID
 
-const databases = new Databases(client); // Initialize the Databases service
+// Initialize the Databases service
+const databases = new Databases(client);
 
 // Function to get flight details and send them to the AI model
 export const sendFlightDataToAI = async (flightDocumentId) => {
@@ -17,7 +18,12 @@ export const sendFlightDataToAI = async (flightDocumentId) => {
         const flightDetailsResponse = await databases.getDocument(
             process.env.APPWRITE_DATABASE_ID, // Database ID
             process.env.APPWRITE_COLLECTION_ID, // Collection ID
-            flightDocumentId // Document ID
+            flightDocumentId, // Document ID
+            {
+                headers: {
+                    'X-Appwrite-Key': process.env.APPWRITE_API_KEY,  // Use API key in headers
+                },
+            }
         );
 
         const flightDetails = flightDetailsResponse;
@@ -55,6 +61,11 @@ export const sendFlightDataToAI = async (flightDocumentId) => {
             flightDocumentId,
             {
                 aiPrediction: predictionResult,
+            },
+            {
+                headers: {
+                    'X-Appwrite-Key': process.env.APPWRITE_API_KEY, // Use API key in headers
+                },
             }
         );
 
