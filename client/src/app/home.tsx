@@ -67,7 +67,7 @@ const Home: React.FC = () => {
                 flightDetailsWithUser       
             );
     
-            alert('Flight details saved successfully! Now fetching AI prediction...');
+            alert('Flight details saved successfully!');
     
             // Fetch the updated document with AI prediction
             const updatedDocument = await fetchUpdatedFlightDetails(document.$id);

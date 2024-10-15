@@ -8,6 +8,8 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@huggingface/inference": "^2.8.1",
+    "dotenv": "^16.4.5",
     "node-appwrite": "^12.0.1"
   },
   "devDependencies": {
