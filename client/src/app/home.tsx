@@ -9,7 +9,7 @@ import { airportOptions } from './assets/airportCodes.js';
 import Calendar from 'react-calendar'; 
 import 'react-calendar/dist/Calendar.css';
 import '../styles/calendarStyles.css';
-import { databases, ID, account } from './appwrite';
+import { databases, ID, account, functions } from './appwrite';
 
 
 const Home: React.FC = () => {
@@ -20,22 +20,6 @@ const Home: React.FC = () => {
     const [selectedDates, setSelectedDates] = useState<[Date | null, Date | null]>([null, null]);
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());  
 
-    const fetchUpdatedFlightDetails = async (documentId: string) => {
-        try {
-            const updatedDocument = await databases.getDocument(
-                '670d6cf40006f6102f3c',  // Your Appwrite database ID
-                '670d6d030007cc158b32',  // Your Appwrite collection ID
-                documentId               // Document ID
-            );
-    
-            console.log('Updated Document:', updatedDocument); // Log the entire document
-            console.log('AI Response:', updatedDocument.aiResponse);  // This line may throw an error if aiResponse is undefined
-            return updatedDocument;
-        } catch (error) {
-            console.error('Error fetching updated document:', error);
-            return undefined; // Explicitly return undefined if there's an error
-        }
-    };
     
     const handleGetFlights = async () => {
         if (!fromLocation || !toLocation || !selectedDates[0] || !selectedDates[1]) {
@@ -52,7 +36,8 @@ const Home: React.FC = () => {
         };
     
         try {
-            const user = await account.get(); 
+            // Get the logged-in user
+            const user = await account.get();
             const userEmail = user.email;
     
             const flightDetailsWithUser = {
@@ -60,29 +45,36 @@ const Home: React.FC = () => {
                 userEmail,  
             };
     
+            // Create document in Appwrite database
             const document = await databases.createDocument(
-                '670d6cf40006f6102f3c',  
-                '670d6d030007cc158b32',    
-                ID.unique(),               
-                flightDetailsWithUser       
+                '670d6cf40006f6102f3c',  // Database ID
+                '670d6d030007cc158b32',  // Collection ID
+                ID.unique(),             // Auto-generate document ID
+                flightDetailsWithUser     // Flight details + user email
             );
     
-            alert('Flight details saved successfully!');
+            const documentId = document.$id; // Retrieve the document ID
     
-            // Fetch the updated document with AI prediction
-            const updatedDocument = await fetchUpdatedFlightDetails(document.$id);
+            // Call Appwrite function with the documentId and userEmail
+            const functionResponse = await functions.createExecution(
+                'your-function-id',      // Replace with your actual Appwrite function ID
+                JSON.stringify({
+                    documentId,
+                    userEmail
+                })
+            );
     
-            // Check if updatedDocument is defined
-            if (updatedDocument) {
-                console.log('AI Response:', updatedDocument.aiResponse);
+            const responseData = JSON.parse(functionResponse.response);
+            if (responseData.ok) {
+                alert('Flight details saved and processed successfully!');
+                console.log('AI Response:', responseData.aiResponse);
             } else {
-                console.error('Failed to fetch updated document');
-                alert('Failed to fetch AI prediction');
+                alert('Failed to process flight details');
             }
     
         } catch (error) {
-            console.error('Error saving flight details:', error);
-            alert('Failed to save flight details');
+            console.error('Error saving or processing flight details:', error);
+            alert('Failed to save or process flight details');
         }
     };
     
