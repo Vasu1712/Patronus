@@ -16,7 +16,8 @@
     "react": "^18",
     "react-calendar": "^5.0.0",
     "react-dom": "^18",
-    "react-select": "^5.8.1"
+    "react-select": "^5.8.1",
+    "proxy": "http://localhost:3001/"
   },
   "devDependencies": {
     "@iconify/react": "^5.0.2",

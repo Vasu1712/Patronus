@@ -18,10 +18,10 @@ const Home: React.FC = () => {
     const [passengers, setPassengers] = useState(1);
     const [showCounter, setShowCounter] = useState(false);
     const [selectedDates, setSelectedDates] = useState<[Date | null, Date | null]>([null, null]);
-    const [currentMonth, setCurrentMonth] = useState<Date>(new Date());  
+    const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+    const [documentId, setDocumentId] = useState('');
 
-    
-    const handleGetFlights = async () => {
+    const handleSendFlightQuery = async () => {
         if (!fromLocation || !toLocation || !selectedDates[0] || !selectedDates[1]) {
             alert('Please fill in the required fields.');
             return;
@@ -36,47 +36,82 @@ const Home: React.FC = () => {
         };
     
         try {
-            // Get the logged-in user
+            
             const user = await account.get();
             const userEmail = user.email;
+
+            console.log("User Email:", userEmail);
+            console.log("Flight Details:", flightDetails);
     
             const flightDetailsWithUser = {
                 ...flightDetails,
                 userEmail,  
             };
     
-            // Create document in Appwrite database
             const document = await databases.createDocument(
-                '670d6cf40006f6102f3c',  // Database ID
-                '670d6d030007cc158b32',  // Collection ID
-                ID.unique(),             // Auto-generate document ID
-                flightDetailsWithUser     // Flight details + user email
+                '670d6cf40006f6102f3c',  
+                '670d6d030007cc158b32',  
+                ID.unique(),            
+                flightDetailsWithUser     
             );
     
-            const documentId = document.$id; // Retrieve the document ID
+            alert('Flight details saved successfully! Document ID: ' + document.$id);
+            setDocumentId(document.$id);
+        
+        }
+            catch (error) {
+                console.error('Error saving flight request details:', error);
+                alert('Failed to save flight request details');
+        }
+    };
+
+    const handleGetFlights = async () => {
+        if (!documentId) {
+            alert('Document ID is missing. Please set the date first.');
+            return;
+        }
     
-            // Call Appwrite function with the documentId and userEmail
-            const functionResponse = await functions.createExecution(
-                'your-function-id',      // Replace with your actual Appwrite function ID
-                JSON.stringify({
-                    documentId,
-                    userEmail
-                })
-            );
+        try {
+            const user = await account.get();
+            const userEmail = user.email;
     
-            const responseData = JSON.parse(functionResponse.response);
-            if (responseData.ok) {
-                alert('Flight details saved and processed successfully!');
-                console.log('AI Response:', responseData.aiResponse);
+            const payload = {
+                documentId,
+                userEmail
+            };
+    
+            console.log('Payload to be sent:', payload);  // Debugging
+    
+            // Make the request to the Appwrite function using fetch
+            const response = await fetch('https://cloud.appwrite.io/v1/functions/670d690f003a02fd9efe/executions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': '6704100e000400efea98', // Ensure correct project ID
+                    'X-Appwrite-Key': 'standard_0e22f3fd38a1d9160f7e6a8111cc6a5f875b73f0c538c67f42d436eb9af0827c2ec7199e712286b02ba2e7c9a01302742654bd7e79462979555f2b84bab55dfd7857e20d210971c8fc58402e2fcbfd3a5f4bf865f8cc0513f8da642cde125ab25686172bf87c99e4878e6e527cd538ca459c4a0e9e804cc5732bcc18f870c944',       // Use your API key here
+                },
+                body: JSON.stringify(payload)
+            });
+    
+            if (!response.ok) {
+                throw new Error('No response received from the function');
+            }
+    
+            const functionResponse = await response.json();
+            console.log('Function Response:', functionResponse);
+    
+            if (functionResponse.ok) {
+                alert('AI Response received successfully!');
+                console.log('AI Response:', functionResponse.aiResponse);
             } else {
                 alert('Failed to process flight details');
             }
-    
         } catch (error) {
-            console.error('Error saving or processing flight details:', error);
-            alert('Failed to save or process flight details');
+            console.error('Error fetching or processing flight details:', error);
+            alert('Failed to process flight details');
         }
     };
+    
     
     
     
@@ -356,7 +391,7 @@ const Home: React.FC = () => {
                             <button className='bg-lightgray rounded-lg py-1 px-4' onClick={() => setSelectedDates([null, null])}>
                                 Cancel
                             </button>
-                            <button className='bg-purple font-semibold rounded-lg py-1 px-4' > 
+                            <button className='bg-purple font-semibold rounded-lg py-1 px-4' onClick={handleSendFlightQuery}> 
                                 Set Date
                             </button>
                         </div>
