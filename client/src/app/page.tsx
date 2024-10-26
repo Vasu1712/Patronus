@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { account, ID, AppwriteError } from "./appwrite";
 import Home from "./home"; // Import the Home component
 
@@ -13,19 +13,45 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to store error messages
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); 
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string, rememberMe: boolean): Promise<void> => {
     try {
       await account.createEmailPasswordSession(email, password);
       const user = await account.get<User>();
       setLoggedInUser(user);
       setErrorMessage(null); // Clear error message on successful login
+  
+      // Store session token based on "Remember Me" checkbox
+      const session = await account.getSession("current");
+      if (rememberMe) {
+        localStorage.setItem("appwriteSession", session.$id); // Save session to localStorage
+      } else {
+        sessionStorage.setItem("appwriteSession", session.$id); // Save session to sessionStorage
+      }
     } catch (error) {
       console.error("Login failed:", error);
       setErrorMessage("Login failed. Please check your credentials."); // Display error message
     }
   };
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      const storedSession = localStorage.getItem("appwriteSession") || sessionStorage.getItem("appwriteSession");
+      if (storedSession) {
+        try {
+          const user = await account.get<User>(); // Try to get the user info
+          setLoggedInUser(user); // Set the logged-in user
+        } catch (error) {
+          console.error("Failed to restore session:", error);
+        }
+      }
+    };
+
+    restoreSession();
+  }, []);
+  
 
   const register = async (): Promise<void> => {
     try {
@@ -35,16 +61,6 @@ const LoginPage: React.FC = () => {
       setErrorMessage(error.message); // Capture and set error message
     }
   };
-
-  // const logout = async (): Promise<void> => {
-  //   try {
-  //     await account.deleteSession("current");
-  //     setLoggedInUser(null);
-  //     setErrorMessage(null); // Clear error message on logout
-  //   } catch (error) {
-  //     console.error("Logout failed:", error);
-  //   }
-  // };
 
   if (loggedInUser) {
     return <Home />;
@@ -93,7 +109,7 @@ const LoginPage: React.FC = () => {
           <div className="flex flex-col justify-between gap-3">
             <button
               type="button"
-              onClick={() => login(email, password)}
+              onClick={() => login(email, password, rememberMe)}
               className="bg-purple hover:bg-purple/80 text-white py-2 px-4 rounded-lg transition w-full"
             >
               Login

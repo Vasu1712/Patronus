@@ -10,9 +10,15 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import '../styles/calendarStyles.css';
 import { databases, ID, account, functions } from './appwrite';
+import { ExecutionMethod } from 'appwrite';
 
+interface User {
+    name: string;
+  }
 
 const Home: React.FC = () => {
+    const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [fromLocation, setFromLocation] = useState('');
     const [toLocation, setToLocation] = useState('');
     const [passengers, setPassengers] = useState(1);
@@ -20,6 +26,23 @@ const Home: React.FC = () => {
     const [selectedDates, setSelectedDates] = useState<[Date | null, Date | null]>([null, null]);
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [documentId, setDocumentId] = useState('');
+    const [aiResponse, setAiResponse] = useState<string | null>(null);
+
+    const logout = async (): Promise<void> => {
+        try {
+          await account.deleteSession("current");
+          localStorage.removeItem("appwriteSession"); 
+          sessionStorage.removeItem("appwriteSession"); 
+          setLoggedInUser(null);
+          setErrorMessage(null); 
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } catch (error) {
+          console.error("Logout failed:", error);
+        }
+      };
+      
 
     const handleSendFlightQuery = async () => {
         if (!fromLocation || !toLocation || !selectedDates[0] || !selectedDates[1]) {
@@ -39,13 +62,16 @@ const Home: React.FC = () => {
             
             const user = await account.get();
             const userEmail = user.email;
+            const userId = user.$id;
 
             console.log("User Email:", userEmail);
             console.log("Flight Details:", flightDetails);
+            // console.log("User Id:", userId);
     
             const flightDetailsWithUser = {
                 ...flightDetails,
-                userEmail,  
+                userEmail,
+                userId,  
             };
     
             const document = await databases.createDocument(
@@ -55,7 +81,7 @@ const Home: React.FC = () => {
                 flightDetailsWithUser     
             );
     
-            alert('Flight details saved successfully! Document ID: ' + document.$id);
+            // alert('Flight dates saved successfully! Document ID: ' + document.$id);
             setDocumentId(document.$id);
         
         }
@@ -74,46 +100,44 @@ const Home: React.FC = () => {
         try {
             const user = await account.get();
             const userEmail = user.email;
+            const userId = user.$id.toString();
     
             const payload = {
                 documentId,
-                userEmail
+                userEmail,
+                userId,
             };
     
-            console.log('Payload to be sent:', payload);  // Debugging
+            // console.log('Payload to be sent:', payload); 
+
+            const result = await functions.createExecution(
+                '670d690f003a02fd9efe', 
+                JSON.stringify(payload), 
+                false,  
+                '/', 
+                ExecutionMethod.POST, 
+                { 'Content-Type': 'application/json' } 
+            )as any;
+
+            // console.log('Function Response:', result.responseBody);           
     
-            // Make the request to the Appwrite function using fetch
-            const response = await fetch('https://cloud.appwrite.io/v1/functions/670d690f003a02fd9efe/executions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Appwrite-Project': '6704100e000400efea98', // Ensure correct project ID
-                    'X-Appwrite-Key': 'standard_0e22f3fd38a1d9160f7e6a8111cc6a5f875b73f0c538c67f42d436eb9af0827c2ec7199e712286b02ba2e7c9a01302742654bd7e79462979555f2b84bab55dfd7857e20d210971c8fc58402e2fcbfd3a5f4bf865f8cc0513f8da642cde125ab25686172bf87c99e4878e6e527cd538ca459c4a0e9e804cc5732bcc18f870c944',       // Use your API key here
-                },
-                body: JSON.stringify(payload)
-            });
+            const responseData = JSON.parse(result.responseBody);
     
-            if (!response.ok) {
-                throw new Error('No response received from the function');
-            }
-    
-            const functionResponse = await response.json();
-            console.log('Function Response:', functionResponse);
-    
-            if (functionResponse.ok) {
-                alert('AI Response received successfully!');
-                console.log('AI Response:', functionResponse.aiResponse);
+            if (responseData.ok) {
+                alert('Flight Request Query received successfully, Now check your mailbox!!');
+                console.log('AI Response:', responseData.aiResponse);
+                setAiResponse(responseData.aiResponse);  // Set AI response in state
             } else {
-                alert('Failed to process flight details');
+                // alert('Failed to process flight details.');
+                setAiResponse('Error fetching response.');
             }
+            console.log(responseData.isEmailSent);
+    
         } catch (error) {
             console.error('Error fetching or processing flight details:', error);
             alert('Failed to process flight details');
         }
     };
-    
-    
-    
     
 
     const handleSwap = () => {
@@ -161,7 +185,7 @@ const Home: React.FC = () => {
 
     return (
         <div className="flex h-screen bg-gradient-to-tl from-bg1 via-bg2 to-bg1">
-            <button className="absolute top-4 right-4 bg-purple text-white py-2 px-4 rounded-full hover:bg-violet-800 transition flex gap-1">
+            <button onClick={logout} className="absolute top-4 right-4 bg-purple text-white py-2 px-4 rounded-full hover:bg-violet-800 transition flex gap-1">
                 <span>Logout</span>
                 <Icon icon="tabler:logout" width="20" className="my-auto" />
             </button>
@@ -354,12 +378,12 @@ const Home: React.FC = () => {
                         )}
                     </div>
                 </div>
-                <div className="w-2/4 p-4 mt-2 rounded-xl flex flex-col gap-4 bg-graybg">
-                    <div className="rounded-xl flex gap-8 bg-graybg">
+                <div className="w-2/4 p-4 mt-2 rounded-xl flex flex-col gap-4 bg-white/5">
+                    <div className="rounded-xl flex gap-8 bg-none">
                         {/* First Calendar (Current Month) */}
                         <Calendar 
                             selectRange={true}
-                            onChange={handleDateChange}
+                            onChange={(value, event) => handleDateChange(value as [Date | null, Date | null])}
                             value={selectedDates}
                             minDate={new Date()} 
                             className='calendar'
@@ -369,7 +393,7 @@ const Home: React.FC = () => {
                         {/* Second Calendar (Next Month) */}
                         <Calendar 
                             selectRange={true}
-                            onChange={handleDateChange}
+                            onChange={(value, event) => handleDateChange(value as [Date | null, Date | null])}
                             value={selectedDates}
                             minDate={new Date()} 
                             className='calendar'
@@ -379,7 +403,7 @@ const Home: React.FC = () => {
                     <div className='w-full h-[0.2px] mt-4 bg-zinc-700'></div>
                     <div className='flex justify-between'>
                         <div className='flex items-center gap-3'>
-                            <div className='bg-lightgray font-medium text-base rounded-lg py-1 px-4 tracking-wide'>
+                            <div className='bg-white/10 font-medium text-base rounded-lg py-1 px-4 tracking-wide'>
                                 {formatDate(selectedDates[0])}
                             </div>
                             <Icon icon='basil:arrow-right-solid' color='#525254' className='cursor-pointer' width={24} />
@@ -388,7 +412,7 @@ const Home: React.FC = () => {
                             </div>
                         </div>
                         <div className='flex items-center gap-3'>
-                            <button className='bg-lightgray rounded-lg py-1 px-4' onClick={() => setSelectedDates([null, null])}>
+                            <button className='bg-white/10 rounded-lg py-1 px-4' onClick={() => setSelectedDates([null, null])}>
                                 Cancel
                             </button>
                             <button className='bg-purple font-semibold rounded-lg py-1 px-4' onClick={handleSendFlightQuery}> 
@@ -410,6 +434,9 @@ const Home: React.FC = () => {
                         />
                     </button>
                 </div>
+                {/* {aiResponse && 
+                    <p className='font-base text-base text-white'>{aiResponse}</p>
+                }  */}
             </div>
         </div>
     );

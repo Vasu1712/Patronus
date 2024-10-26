@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Functions, ID } from 'appwrite';
+import { Client, Account, Databases, Functions, ID, ExecutionMethod } from 'appwrite';
 
 export const client = new Client();
 

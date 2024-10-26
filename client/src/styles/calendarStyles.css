@@ -1,6 +1,6 @@
 .react-calendar {
     max-width: 100%;
-    background: #28282A; /* Calendar background color */
+    background: rgb(255, 255, 255, 0.00);; /* Calendar background color */
     color: #d4d4db; /* Default text color */
     border-radius: 8px;
     /* box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2); */
@@ -52,7 +52,7 @@
 }
 
 .react-calendar__navigation button {
-    color: #6A49E2; /* Button text color */
+    color: #dfd6ff; /* Button text color */
     min-width: 44px;
     background: none;
     font-size: 16px;
@@ -60,13 +60,14 @@
 }
 
 .react-calendar__navigation button:disabled {
-    background-color: #28282A; /* Disabled button color */
+    background-color: rgb(255, 255, 255, 0.00); 
     color: #676767;
 }
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-    background-color: #f8f8fa; /* Hover color for navigation buttons */
+    background-color: rgb(255, 255, 255, 0.05); 
+    border-radius: 4px;
 }
 
 /* Weekday and month names styles */
@@ -120,32 +121,32 @@
 
 /* Disabled tile styles */
 .react-calendar__tile:disabled {
-    background-color: #28282A; /* Disabled tile color */
+    background-color: rgb(255, 255, 255, 0.025); /* Disabled tile color */
     color: #676767;
 }
 
 /* Hover styles for tiles */
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-    background: #f8f8fa; /* Hover color for tiles */
-    color: #6A49E2; /* Hover text color */
+    background: rgb(255, 255, 255, 0.15);
+    color: #cdc1fa;
+    border-radius: 4px;
 }
 
 /* Current date styles */
 .react-calendar__tile--now {
-    background: #313133; /* Current date background color */
+    background: rgb(255, 255, 255, 0.25); /* Current date background color */
     border-radius: 6px;
     font-weight: bold;
     color: #fff; /* Current date text color */
 }
 
-/* Hover effects for current date */
 .react-calendar__tile--now:enabled:hover,
 .react-calendar__tile--now:enabled:focus {
     background: #6A49E233; /* Hover color for current date */
     border-radius: 6px;
     font-weight: bold;
-    color: #6A49E2; /* Hover text color for current date */
+    color: #ffffff; /* Hover text color for current date */
 }
 
 /* Active tile styles */
