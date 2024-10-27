@@ -11,6 +11,8 @@ import 'react-calendar/dist/Calendar.css';
 import '../styles/calendarStyles.css';
 import { databases, ID, account, functions } from './appwrite';
 import { ExecutionMethod } from 'appwrite';
+import dotenv from 'dotenv';
+dotenv.config();
 
 interface User {
     name: string;
@@ -75,8 +77,8 @@ const Home: React.FC = () => {
             };
     
             const document = await databases.createDocument(
-                '670d6cf40006f6102f3c',  
-                '670d6d030007cc158b32',  
+                process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,  
+                process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID!,  
                 ID.unique(),            
                 flightDetailsWithUser     
             );
@@ -111,7 +113,7 @@ const Home: React.FC = () => {
             // console.log('Payload to be sent:', payload); 
 
             const result = await functions.createExecution(
-                '670d690f003a02fd9efe', 
+                process.env.NEXT_PUBLIC_APPWRITE_FUNCTION_ID!, 
                 JSON.stringify(payload), 
                 false,  
                 '/', 
@@ -141,7 +143,7 @@ const Home: React.FC = () => {
     
 
     const handleSwap = () => {
-        let temp = fromLocation;
+        const temp = fromLocation;
         setFromLocation(toLocation);
         setToLocation(temp);
     };
@@ -434,9 +436,6 @@ const Home: React.FC = () => {
                         />
                     </button>
                 </div>
-                {/* {aiResponse && 
-                    <p className='font-base text-base text-white'>{aiResponse}</p>
-                }  */}
             </div>
         </div>
     );

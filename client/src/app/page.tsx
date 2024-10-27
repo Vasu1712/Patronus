@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, ChangeEvent, useEffect } from "react";
-import { account, ID, AppwriteError } from "./appwrite";
+import { account, ID, } from "./appwrite";
 import Home from "./home"; // Import the Home component
 
 interface User {
@@ -57,8 +57,13 @@ const LoginPage: React.FC = () => {
     try {
       await account.create(ID.unique(), email, password, name);
       setErrorMessage(null); // Clear error message if successful
-    } catch (error: AppwriteError) { 
-      setErrorMessage(error.message); // Capture and set error message
+    } catch (error: unknown) { 
+      if (error instanceof Error) {
+        setErrorMessage(error.message); // Capture and set error message
+      } else {
+        console.error('Unknown error:', error);
+        setErrorMessage('An unknown error occurred.');
+      }
     }
   };
 
@@ -99,7 +104,13 @@ const LoginPage: React.FC = () => {
           />
           <div className="flex justify-between align-items">
             <label className="text-base flex">
-              <input type="checkbox" name="rememberMe" className="pl-2" />
+            <input
+                type="checkbox"
+                name="rememberMe"
+                checked={rememberMe} 
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)} 
+                className="pl-2"
+              />
               <p className="ml-1">Remember me</p>
             </label>
             <span className="italic font-semibold text-sm text-purple">
