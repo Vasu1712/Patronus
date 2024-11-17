@@ -3,6 +3,9 @@
 import React, { useState } from 'react';
 import Image from "next/image"; 
 import logo from "./images/PatronusLogo.png"; 
+import header from "./images/patronusheader.svg";
+import appwrite from "./images/black.svg";
+import github from "./images/githublogo.png";
 import Select, { components } from 'react-select';
 import { Icon } from '@iconify/react';
 import { airportOptions } from './assets/airportCodes.js'; 
@@ -55,7 +58,7 @@ const Home: React.FC = () => {
         const flightDetails = {
             fromLocation,
             toLocation,
-            departureDate: selectedDates[0].toLocaleDateString('en-GB'),
+            s: selectedDates[0].toLocaleDateString('en-GB'),
             arrivalDate: selectedDates[1].toLocaleDateString('en-GB'),
             passengers,
         };
@@ -186,25 +189,31 @@ const Home: React.FC = () => {
     const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
 
     return (
-        <div className="flex h-screen bg-gradient-to-tl from-bg1 via-bg2 to-bg1">
-            <button onClick={logout} className="absolute top-4 right-4 bg-purple text-white py-2 px-4 rounded-full hover:bg-violet-800 transition flex gap-1">
-                <span>Logout</span>
+        <div className="flex flex-col md:flex-row h-screen bg-gradient-to-tl from-bg1 via-bg2 to-bg1">
+            <button onClick={logout} className="absolute top-4 right-4 md:bg-purple text-white py-2 px-4 rounded-full hover:bg-violet-800 transition flex gap-1">
+                <span className='hidden md:flex'>Logout</span>
                 <Icon icon="tabler:logout" width="20" className="my-auto" />
             </button>
-            <div className="w-1/5 flex flex-col gap-8 items-center justify-center">
+            <div className="w-full md:w-1/5 flex flex-col gap-4 md:gap-8 items-center justify-center p-4">
                 <Image
                     src={logo} 
                     width={300}  
                     alt="Patronus Logo"
-                    className="w-3/4 h-auto"
+                    className="hidden md:block w-3/4 h-auto"
                 />
-                <button className="bg-purple text-white py-2 px-4 rounded-full">Booking History</button>
+                <Image
+                    src={header} 
+                    width={600}  
+                    alt="Patronus Logo"
+                    className="w-2/5 md:hidden h-auto"
+                />
+                <button className="hidden md:block bg-purple text-white py-2 px-4 rounded-full mt-0">Booking History</button>
             </div>
 
             {/* Right Side */}
-            <div className="w-4/5 flex flex-col items-center justify-center gap-16">  
-                <div className='w-1/2 flex justify-evenly items-center gap-2 pl-4'>
-                    <div className='w-2/5'>
+            <div className="w-full md:w-4/5 flex flex-col items-center justify-center gap-4 md:gap-16 p-4">  
+                <div className='w-full md:w-1/2 flex flex-col md:flex-row justify-evenly items-center md:gap-2 md:pl-4'>
+                    <div className='w-2/3 md:w-2/5'>
                     <Select
                         options={airportOptions}
                         value={fromLocation ? { value: fromLocation, label: fromLocation } : null}
@@ -266,7 +275,7 @@ const Home: React.FC = () => {
                     />
                     </div>
                     <button
-                        className='flex items-center justify-center p-1 bg-bg2 rounded-full w-8 h-8 z-2'
+                        className='flex items-center justify-center p-1 bg-bg2 rounded-full w-8 h-8 z-2 mt-2 md:mt-0'
                         onClick={handleSwap}
                         tabIndex={-1}>
                         <Icon
@@ -275,7 +284,7 @@ const Home: React.FC = () => {
                             className='text-lavender'
                         />
                     </button>
-                    <div className='w-2/5'>
+                    <div className='w-2/3 md:w-2/5 mt-2 md:mt-0'>
                         <Select
                             options={airportOptions}
                             value={toLocation ? { value: toLocation, label: toLocation } : null}
@@ -336,10 +345,11 @@ const Home: React.FC = () => {
                             }}
                         />
                     </div>
+
                     {/* Passengers */}
-                    <div className="w-1/5 flex gap-1 ml-4">
+                    <div className="w-full md:w-1/5 flex gap-1 mt-4 md:ml-4 md:mt-0 justify-center md:justify-start">
                         {!showCounter ? (
-                            <div className="flex items-center gap-3 px-2 py-1 border border-lavender rounded-lg">
+                            <div className="flex items-center justify-center gap-3 px-2 py-1 border border-lavender rounded-lg">
                                 <Icon
                                     icon='solar:minus-circle-bold-duotone'
                                     className='text-lavender cursor-pointer'
@@ -359,8 +369,7 @@ const Home: React.FC = () => {
                                 />
                             </div>
                         ) : (
-                            <div className="flex items-center gap-3 px-2 py-1 border border-lavender rounded-lg">
-                                
+                            <div className="flex items-center justify-center gap-3 px-2 py-1 border border-lavender rounded-lg">
                                 <Icon
                                     icon='solar:minus-circle-bold-duotone'
                                     className='text-lavender cursor-pointer'
@@ -380,8 +389,8 @@ const Home: React.FC = () => {
                         )}
                     </div>
                 </div>
-                <div className="w-2/4 p-4 mt-2 rounded-xl flex flex-col gap-4 bg-white/5">
-                    <div className="rounded-xl flex gap-8 bg-none">
+                <div className="w-full md:w-2/4 p-4 mt-2 rounded-xl flex flex-col gap-4 bg-white/5">
+                    <div className="rounded-xl flex flex-col md:flex-row gap-4 md:gap-8 bg-none">
                         {/* First Calendar (Current Month) */}
                         <Calendar 
                             selectRange={true}
@@ -391,7 +400,7 @@ const Home: React.FC = () => {
                             className='calendar'
                             onActiveStartDateChange={({ activeStartDate }) => setCurrentMonth(activeStartDate!)}
                         />
-                        <div className='w-[0.2px] mt-8 h-full bg-zinc-700'></div>
+                        <div className='hidden md:block w-[0.2px] mt-8 h-full bg-zinc-700'></div>
                         {/* Second Calendar (Next Month) */}
                         <Calendar 
                             selectRange={true}
@@ -403,8 +412,8 @@ const Home: React.FC = () => {
                         />
                     </div>
                     <div className='w-full h-[0.2px] mt-4 bg-zinc-700'></div>
-                    <div className='flex justify-between'>
-                        <div className='flex items-center gap-3'>
+                    <div className='flex flex-col md:flex-row justify-between gap-4 md:gap-0'>
+                        <div className='flex items-center justify-center gap-4'>
                             <div className='bg-white/10 font-medium text-base rounded-lg py-1 px-4 tracking-wide'>
                                 {formatDate(selectedDates[0])}
                             </div>
@@ -413,7 +422,7 @@ const Home: React.FC = () => {
                                 {formatDate(selectedDates[1])}
                             </div>
                         </div>
-                        <div className='flex items-center gap-3'>
+                        <div className='flex items-center justify-center gap-4 mt-2'>
                             <button className='bg-white/10 rounded-lg py-1 px-4' onClick={() => setSelectedDates([null, null])}>
                                 Cancel
                             </button>
@@ -436,6 +445,22 @@ const Home: React.FC = () => {
                         />
                     </button>
                 </div>
+                <footer className="italic text-lightgray flex items-center justify-center gap-2 pt-6">
+                    <span>Powered by</span>
+                    <Image
+                        src={appwrite}
+                        alt="Appwrite Logo"
+                        className="w-12 md:w-20 h-auto"
+                    />
+                    <span>. Developed by <a href='https://www.vasupal.com/'>Vasu1712</a></span>
+                    <a href='https://github.com/vasu1712'>
+                        <Image
+                            src={github} 
+                            alt="GitHub Logo"
+                            className="w-4 md:w-5 h-auto mb-1"
+                        />
+                    </a>
+                </footer>
             </div>
         </div>
     );
