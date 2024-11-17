@@ -44,10 +44,11 @@ This project was born out of personal frustration - the tedious process of sifti
 
 ## Demo Video/Photos/Link
 
-A video demo can be viewed here:
+A video demo can be viewed here: https://youtu.be/L62-S0vXP2g?si=Q1U6QjJbVRqJg5-t
 
+The application can also be reached using this link: https://patronus-vasu1712.vercel.app/
 
-The application can also be reached using this link: 
+Domunentaion Link: https://patronus-2.gitbook.io/docs.patronus
 
 
 ## Future Prospects for Patronus
